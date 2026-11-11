@@ -1,0 +1,98 @@
+% =====================================================================
+%  EE6423 – Bản mô tả bài toán 1 trang (M0), theo Phụ lục A của project brief
+%  Mạch PIR: đồ án tốt nghiệp "Thiết kế và triển khai hệ thống cảm biến PIR
+%  ứng dụng trong Smarthome" (Nguyễn Văn Mùng), Documents/do an.pdf, mục 3.2
+%  Biên dịch:  latexmk -xelatex EE6423_M0_MoTaBaiToan.tex
+% =====================================================================
+\documentclass[a4paper,10pt]{article}
+\usepackage{fontspec}
+\usepackage{polyglossia}
+\setdefaultlanguage{vietnamese}
+\setmainfont{Times New Roman}
+\usepackage{amsmath}
+\usepackage{unicode-math}
+\setmathfont{TeX Gyre Termes Math}
+\usepackage{icomma}
+\usepackage[a4paper,left=1.8cm,right=1.8cm,top=1.3cm,bottom=1.2cm]{geometry}
+\usepackage{enumitem}
+\usepackage{tabularx,booktabs}
+\usepackage{xcolor}
+\pagestyle{empty}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{1.5pt}
+\setlist{nosep,leftmargin=1.2em}
+\newcommand{\muc}[1]{\par\smallskip\textbf{#1}\enspace}
+\newcommand{\co}{\textbf{Có}}
+\newcommand{\cc}{\textbf{Chưa chắc}}
+\newcommand{\kO}{\,\text{kΩ}}
+\newcommand{\MO}{\,\text{MΩ}}
+
+\begin{document}
+
+\begin{center}
+  {\large\bfseries EE6423 – Bản mô tả bài toán (M0)}\\[2pt]
+  \textbf{Thành viên:} Nguyễn Thái Sơn – 20252373M \quad·\quad Vũ Minh Đức – 20252371M
+\end{center}
+\vspace{-4pt}\rule{\linewidth}{0.4pt}
+
+\muc{1. Tên bài toán:} Ước lượng tín hiệu chuyển động của người từ mảng 5 cảm biến PIR D203S sau mạch
+khuếch đại -- lọc hai tầng LM358 và ADC 12~bit, khi có nhiễu điện lưới 50~Hz, trôi nền và nhiễu nội tại
+cùng dải tần với tín hiệu.
+
+\muc{2. Hệ và cảm biến:}
+\begin{itemize}
+  \item \emph{Hệ/thiết bị:} nút PIR array (đồ án của Nguyễn Văn Mùng, ĐHBK Hà Nội): 1 cảm biến ở giữa và 4 cảm biến
+        xung quanh nghiêng $30^\circ$, treo trần cao 2,4~m, giám sát vùng $3\times3$~m (lưới $6\times6$ ô, mỗi ô 0,5~m).
+        Mỗi cảm biến có một mạch analog hai tầng LM358, đầu ra vào ADC 12~bit của ESP32 (5 kênh).
+  \item \emph{Mạch khuếch đại -- lọc:} tầng 1 không đảo, $G_1 = 1 + 1\MO/47\kO \approx 22$, dải $0{,}072$ -- $15{,}9$~Hz
+        (tụ $47~\mu$F, $10$~nF); tầng 2 đảo, $G_2 = -510\kO/15\kO = -34$, dải $1{,}06$ -- $31{,}2$~Hz (tụ $10~\mu$F, $10$~nF).
+        Tổng $\approx 748$ lần (57~dB), dải thông hiệu dụng $\approx 1$--$16$~Hz. Cầu chia $150\kO/100\kO$ đặt mức nghỉ
+        $0{,}4\,V_{CC} \approx 1{,}3$~V ($\approx 1500$ LSB).
+  \item \emph{Cảm biến:} D203S, đầu thu nhiệt điện hai phần tử, chỉ đáp ứng khi bức xạ hồng ngoại thay đổi, tín hiệu ra cỡ mV.
+        Đơn vị số đo: LSB của ADC (0 -- 4095, $\approx 0{,}8$~mV).
+\end{itemize}
+
+\muc{3. Đại lượng cần ước lượng:} dạng sóng chuyển động $x[n]$ (mV, tại ngõ vào mạch) do người đi qua vùng nhìn của
+từng cảm biến: xung gần hình sin, tần số cỡ 0,5 -- 3~Hz, biên độ cỡ mV tùy khoảng cách và diện tích cơ thể. Từ $x[n]$ của
+5 kênh suy ra có/không có người và ô người đang đứng (vị trí, hướng đi). Số đo $y[n]$ (ADC) không cho trực tiếp $x[n]$:
+đã nhân $\approx 750$ lần, bị lọc dải thông 1 -- 16~Hz và đảo dấu, cộng mức nghỉ $\approx 1500$ LSB và các nhiễu dưới đây.
+
+\muc{4. Các nguồn bất định dự kiến:}
+\begin{itemize}
+  \item Nhiễu điện lưới 50~Hz cảm ứng vào cực cổng trở kháng cao của D203S. Mạch chỉ suy giảm chứ không triệt tiêu
+        (cực 15,9 và 31,2~Hz, nhưng độ lợi 748). Với $f_s = 100$~Hz, 50~Hz gấp đúng về tần số Nyquist ($\omega = \pi$~rad/mẫu), hài 100~Hz gấp về DC.
+  \item Trôi nền: mức nghỉ phụ thuộc $V_{CC}$, cầu chia và sai số linh kiện, trôi theo nhiệt độ phòng và ánh sáng. Tầng 1 chỉ chặn dưới 0,072~Hz nên trôi chậm vẫn lọt qua.
+  \item Nhiễu nội tại của D203S (nhiệt, $1/f$) và của LM358, bị định dạng bởi dải thông 1 -- 16~Hz nên là nhiễu màu, trùng dải tín hiệu.
+  \item Lượng tử hóa ADC 12~bit; mất mẫu hoặc lệch thời gian giữa các mẫu khi truyền dữ liệu.
+\end{itemize}
+
+\muc{5. Các chế độ vận hành dự kiến:} (1) nghỉ, không có người, 5 kênh dao động quanh $\approx 1500$ LSB (trong dải 1300 -- 1600);
+(2) người đi qua vùng giám sát theo quỹ đạo dọc cột, dọc hàng, đường chéo hoặc quỹ đạo kiểm thử, theo hai chiều;
+(3) điều kiện thay đổi: khoảng cách, tốc độ, nền nhiệt tăng dần, thiết bị điện gần đó bật/tắt làm biên độ 50~Hz đổi (chế độ này chỉ có trong mô phỏng).
+
+\muc{6. Nguồn dữ liệu và ground truth:} (a) \emph{Thật:} bộ dữ liệu của đồ án (73 kịch bản, khoảng 700 file CSV, 5 kênh, $f_s = 100$~Hz,
+nhãn ô vị trí đồng bộ với video); chế độ nghỉ cho tham chiếu $x[n] = 0$ và thống kê nhiễu. (b) \emph{Mô phỏng:} Python (seed cố định) dựng chuỗi
+cảm biến $\to$ mạch hai tầng ở mục 2 $\to$ ADC, theo mô hình LTspice của đồ án; ground truth là $x[n]$ sạch.
+
+\muc{7. Tự kiểm tra theo checklist mục 4:}\\[2pt]
+\small
+\begin{tabularx}{\linewidth}{@{}p{3.4cm}p{1.6cm}X@{}}
+\toprule
+\textbf{Dòng} & \textbf{Trả lời} & \textbf{Lý do} \\ \midrule
+\multicolumn{3}{@{}l}{\textit{Hồi I – Hiểu nhiễu}} \\
+Nhiễu có cấu trúc & \co & Điện lưới 50~Hz (vạch phổ gấp về Nyquist), trôi nền (bướu hẹp tại 0), nhiễu nội tại màu. \\
+Biết $f_s$ và chuỗi đo & \co & D203S $\to$ LM358 hai tầng (57~dB, 1 -- 16~Hz) $\to$ ADC 12~bit ESP32, $f_s = 100$~Hz $\to$ xử lý số. \\
+\multicolumn{3}{@{}l}{\textit{Hồi II – Học từ dữ liệu}} \\
+Tham số cần ước lượng & \co & Mức nghỉ (bias), phương sai nhiễu, biên độ 50~Hz, tham số tự tương quan nhiễu màu, độ lợi thực của mạch (sai số linh kiện). \\
+Dữ liệu hiệu chuẩn & \co & Đoạn nghỉ không người trong dữ liệu thật; ground truth $x[n]$ đầy đủ từ mô phỏng. \\
+\multicolumn{3}{@{}l}{\textit{Hồi III – Hành động}} \\
+Đại lượng theo thời gian & \co & $x[n]$ đổi theo thời gian, bị khuếch đại -- lọc và chìm trong nhiễu cùng dải tần. \\
+Mô hình thống kê/động học & \cc & Mạch là hệ tuyến tính đã biết (nhiều cực thực); $x[n]$ là chuỗi xung gần sin, mô hình trạng thái phù hợp cần kiểm chứng ở M2. \\
+Kịch bản thay đổi & \co & Quỹ đạo, tốc độ, khoảng cách người đổi; nền nhiệt trôi, biên độ 50~Hz đổi (mô phỏng). \\
+\multicolumn{3}{@{}l}{\textit{Đánh giá}} \\
+Có metric & \co & RMSE của $\hat{x}[n]$ so với ground truth, SNR trước/sau xử lý; trên dữ liệu thật: tỉ lệ phân biệt đúng nghỉ/có người theo nhãn ô. \\
+$\ge 2$ phương án & \cc & Dự kiến lọc theo thống kê dừng và lọc theo mô hình trạng thái; chọn ở M3. \\
+\bottomrule
+\end{tabularx}
+
+\end{document}
